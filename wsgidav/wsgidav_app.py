@@ -52,6 +52,7 @@ import inspect
 import platform
 import sys
 import time
+import html
 from urllib.parse import unquote
 
 from wsgidav import __version__, util
@@ -153,6 +154,7 @@ class WsgiDAVApp:
         if type(self.re_encode_path_info) is not bool:
             raise ValueError("re_encode_path_info must be bool (or omitted)")
         self.unquote_path_info = hotfixes.get("unquote_path_info", False)
+        self.decode_html_entities = hotfixes.get("decode_html_entities", False)
 
         lock_storage = config.get("lock_storage")
         if lock_storage is True:
@@ -411,6 +413,10 @@ class WsgiDAVApp:
         # done by the server (#8, #228).
         if self.unquote_path_info:
             path = unquote(environ["PATH_INFO"])
+
+        # Decode HTML entities
+        if self.decode_html_entities:
+            path = html.unescape(path)
 
         # GC issue 22: Pylons sends root as u'/'
         if not util.is_str(path):
